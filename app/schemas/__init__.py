@@ -27,7 +27,7 @@ class JDResumeMatch(BaseModel):
     education_match: str
     match_score: int
     improvement_suggestions: Optional[str] = None
-    _pass: bool = False | True  # Default to False, can be overridden based on match_score
+    resume_pass: bool  
 
 
 class Result(BaseModel):
@@ -53,25 +53,5 @@ class ImageToText(BaseModel):
     experience : List[str]
     education : List[str]
 
-def parse_resume_analysis(ollama_response: dict) -> JDResumeMatch:
-    # Extract string JSON inside `message.content`
-    raw_content = ollama_response["result"]["message"]["content"]
 
-    # Convert to dict
-    parsed_content = json.loads(raw_content)
-
-    # The real data is inside "properties"
-    props = parsed_content.get("properties", {})
-
-    return JDResumeMatch(
-        jd_skills=props.get("jd_skills", {}).get("items", []),
-        resume_skills=props.get("resume_skills", {}).get("items", []),
-        matching_skills=props.get("matching_skills", []),
-        missing_skills=props.get("missing_skills", []),
-        experience_match=props.get("experience_match", ""),
-        education_match=props.get("education_match", ""),
-        match_score=props.get("match_score", 0),
-        improvement_suggestions=props.get("improvement_suggestions", ""),
-        _pass=props.get("match_score", 0) > 70  # example threshold
-    )
 
