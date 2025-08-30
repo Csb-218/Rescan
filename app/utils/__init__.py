@@ -11,7 +11,8 @@ import base64
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)  # ensure folder exists
 
-ALLOWED_TYPES = {"application/pdf","image/png","image/jpeg","image/jpg"}
+ALLOWED_TYPES = {"application/pdf"}
+ALLOWED_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
 
 def extract_text_from_pdf(pdf_path:str) -> str:
     """
@@ -44,25 +45,59 @@ def image_to_base64(image_path:str) -> str:
         return encoded_image.decode("utf-8")
 
 
-async def validate_and_save_files(jd: UploadFile = File(...), resume: UploadFile = File(...))-> tuple:
+async def validate_and_save_files(jd: UploadFile = File(...), resume: UploadFile = File(...)) -> tuple:
+    
+    print("JD File:", type(jd), jd)
+    print("Resume File:", type(resume), resume)
+    
+    # Check if no resume or jd provided
+    if not isinstance(jd, UploadFile) or not isinstance(resume, UploadFile):
+        raise HTTPException(
+            status_code=400,
+            detail="Both JD and Resume files must be provided."
+        )
 
     saved_paths = []
 
     for f in (jd, resume):
+
+        # check if filetype allowed
         if f.content_type not in ALLOWED_TYPES:
             raise HTTPException(
                 status_code=400,
-                detail=f"File type '{f.content_type}' is not allowed.c"
+                detail=f"Invalid file type. Only PDF files are allowed."
             )
-        # Save the file temporarily
+        
+         # check file size 
+        if f.size is None or f.size <= 1 :
+             raise HTTPException(
+                status_code=400,
+                detail="Both JD and Resume files must not be empty."
+            )
+        
+        # check if file size exceeds limit
+        if f.size > ALLOWED_FILE_SIZE:
+            raise HTTPException(
+                status_code=400,
+                detail="File size exceeds the 5 MB limit."
+            )
+
+        # check if filename is valid
+        if not f.filename:
+            raise HTTPException(
+                status_code=400,
+                detail="Uploaded file must have a valid filename."
+            )
+
         save_path = UPLOAD_DIR / f.filename
+        # Ensure saved_path is a Path object, not a string
         with open(save_path, "wb") as buffer:
             buffer.write(await f.read())
         saved_paths.append(save_path)
 
     return jd, resume, saved_paths
 
-def match_calculator(jd_content:str , resume_content:str) -> float:
+def match_calculator(jd_content:str , resume_content:str) :
     """
     Calculate the match percentage between JD and resume content.
     
@@ -73,6 +108,7 @@ def match_calculator(jd_content:str , resume_content:str) -> float:
     Returns:
         float: Match percentage.
     """
+    pass
     # model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
     # embeddings = model.encode([resume_content,jd_content],normalize_embeddings=True)
@@ -128,56 +164,4 @@ _pass = True only if:
 
 """
 
-result_schema = {
-                        "jd_skills": {
-                            "type": "array",
-                            "items": {"type": "string"}
-                        },
-                        "resume_skills": {
-                            "type": "array",
-                            "items": {"type": "string"}
-                        },
-                        "matching_skills": {
-                            "type": "array",
-                            "items": {"type": "string"}
-                        },
-                        "missing_skills": {
-                            "type": "array",
-                            "items": {"type": "string"}
-                        },
-                         "YOE_required": {
-                            "type": "integer",
-                            "description": "Years of experience required by the job description"
-                        },
-                        "YOE_provided": {
-                            "type": "integer",
-                            "description": "Years of experience provided by the candidate"
-                        },
-                        "YOE_match": {
-                            "type": "string",
-                            "description": "Write if candidate meets minimum experience requirements"
-                        },
-                        "education_required": {
-                            "type": "string",
-                            "description": "Education level required by the job description"
-                        },
-                        "education_provided": {
-                            "type": "string",
-                            "description": "Education level provided by the candidate"
-                        },
-                        "education_match": {
-                            "type": "string",
-                            "description": "Write if candidate meets minimum education requirements"
-                        },
-                        "match_score": {
-                            "type": "integer",
-                            "minimum": 0,
-                            "maximum": 100
-                        },
-                        "improvement_suggestions": {
-                            "type": "string"
-                        },
-                        "_pass": {
-                            "type": "boolean"
-                        }
-                    }
+                        
