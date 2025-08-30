@@ -47,9 +47,6 @@ def image_to_base64(image_path:str) -> str:
 
 async def validate_and_save_files(jd: UploadFile = File(...), resume: UploadFile = File(...)) -> tuple:
     
-    print("JD File:", type(jd), jd)
-    print("Resume File:", type(resume), resume)
-    
     # Check if no resume or jd provided
     if not jd or not resume:
         raise HTTPException(
