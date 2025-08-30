@@ -51,7 +51,7 @@ async def validate_and_save_files(jd: UploadFile = File(...), resume: UploadFile
     print("Resume File:", type(resume), resume)
     
     # Check if no resume or jd provided
-    if not isinstance(jd, UploadFile) or not isinstance(resume, UploadFile):
+    if not jd or not resume:
         raise HTTPException(
             status_code=400,
             detail="Both JD and Resume files must be provided."
@@ -60,6 +60,12 @@ async def validate_and_save_files(jd: UploadFile = File(...), resume: UploadFile
     saved_paths = []
 
     for f in (jd, resume):
+
+        if not hasattr(f,"content_type"):
+            raise HTTPException(
+                status_code=400,
+                detail="Both JD and Resume files must be provided."
+            )
 
         # check if filetype allowed
         if f.content_type not in ALLOWED_TYPES:
