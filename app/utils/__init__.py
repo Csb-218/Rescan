@@ -8,7 +8,7 @@ import base64
 # from sklearn.metrics.pairwise import cosine_similarity
 # from sentence_transformers import SentenceTransformer
 
-UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR = Path("app/uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)  # ensure folder exists
 
 ALLOWED_TYPES = {"application/pdf"}
@@ -58,6 +58,7 @@ async def validate_and_save_files(jd: UploadFile = File(...), resume: UploadFile
 
     for f in (jd, resume):
 
+        #check if not corrupted file
         if not hasattr(f,"content_type"):
             raise HTTPException(
                 status_code=400,

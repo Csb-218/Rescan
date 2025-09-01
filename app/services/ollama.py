@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from httpx import Response
 from app.schemas import OllamaResponse,JDResumeMatch,Result
 from app.utils import match_score_logic 
 from app.config import ollamaClient
@@ -77,18 +78,19 @@ async def ollama_match_resume_jd(jd:str,resume:str)-> object | None :
 
             '''
 
-            body = {
+            body:dict = {
                 "model": "llama3.2:latest",
                 "prompt": system_prompt,
                 "stream": False,
                 "format" : JDResumeMatch.model_json_schema()
             }
         
-            response = await ollamaClient.post(url='/api/generate', json=body, extensions={"trace": log},timeout=240)
+            response:Response = await ollamaClient.post(url='/api/generate', json=body, extensions={"trace": log},timeout=240)
 
             if response.status_code != 200:
                  print(f"Request failed with status {response.status_code}: {response.json()}")
-                 return None
+                 raise HTTPException(status_code=response.status_code, detail=f"Request failed")
+                 
  
             raw_response = response.json()
             # print(99,raw_response,'\n')
