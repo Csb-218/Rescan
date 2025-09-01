@@ -1,6 +1,7 @@
 import pytest
+from fastapi import HTTPException
 from app.config import ollamaClient
-from app.services.ollama import ollama_extract_text_from_image
+# from app.services.ollama import ollama_extract_text_from_image
 from app.schemas import JDResumeMatch,OllamaResponse
 from app.services.ollama import ollama_match_resume_jd
 import json
@@ -133,7 +134,39 @@ async def test_ollama_match_resume_jd_no_response(monkeypatch):
 
     assert res is None
 
+@pytest.mark.asyncio
+async def test_ollama_match_resume_jd_exception(monkeypatch):
+    """
+    Test the behavior of `ollama_match_resume_jd` when ollamaClient 
+    sends a post request on route /api/generate and catches status not equal to 200 .
+    .
+    """
 
+    jd = "JD text"
+    resume = "Resume text"
+
+    class MockResponse:
+        # mock json() method always returns a specific testing dictionary
+        @staticmethod
+        def json():
+            return {"error": "Internal Server Error"}
+
+        @property
+        def status_code(self):
+            return 500
+
+    async def set_response(*args, **kwargs):
+        return MockResponse()
+
+    monkeypatch.setattr(ollamaClient, "post", set_response)
+
+   # Verify that HTTPException is raised with the correct status code
+    with pytest.raises(HTTPException) as excinfo:
+        await ollama_match_resume_jd(jd, resume)
+    
+    # Verify the exception has the correct properties
+    assert excinfo.value.status_code == 500
+    assert "Request failed" in excinfo.value.detail
 
 # async def test_ollama_extract_text_from_image(mock_client):
     # Arrange
