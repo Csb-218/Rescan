@@ -5,8 +5,8 @@ from PIL import Image
 import base64
 
 # imports for vector similarity
-# from sklearn.metrics.pairwise import cosine_similarity
-# from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+from sentence_transformers import SentenceTransformer
 
 UPLOAD_DIR = Path("app/uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)  # ensure folder exists
@@ -112,14 +112,14 @@ def match_calculator(jd_content:str , resume_content:str) :
     Returns:
         float: Match percentage.
     """
-    pass
-    # model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+    model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
-    # embeddings = model.encode([resume_content,jd_content],normalize_embeddings=True)
+    embeddings = model.encode([resume_content,jd_content],normalize_embeddings=True)
+    # print(embeddings)
+    sim = cosine_similarity([embeddings[0]], [embeddings[1]])[0][0]
 
-    # sim = cosine_similarity([embeddings[0]], [embeddings[1]])[0][0]
-    # print(f"Similarity Score: {sim}")
-    # return sim*100
+    print(f"Similarity Score: {sim}")
+    return sim*100
 
 
 match_score_logic = """
@@ -133,7 +133,7 @@ NOTE : If the Resume has less than minimum required experience , the dont evalua
 
     Score = ratio * 50.
 
-    Example: JD requires 10 skills, resume has 7 → 7/10 = 0.7 → 35/50 points.
+    Example: JD requires 10 skills, resume has 7 → (7/10)*50 = 35 points.
 
 2. Experience (30 points)
 
@@ -142,9 +142,11 @@ NOTE : If the Resume has less than minimum required experience , the dont evalua
     If less, partial credit: experience_years / jd_years * 30.
 
     Example: 
-            - JD requires minnimum of 5 years, resume has maximum 3 years then count it as 0.
+            - JD requires minimum of 5 years, resume has maximum 3 years then count it as 0.
             - Calculate carefully , if resume has 6 months of experience then count it as 0.5 years and if resume has 3 months of experience then count it as 0.25 years.
-            - If experience required is 3-5 years, resume has 4 then count it as 20/25.
+            - If experience required is 3-5 years, resume has 4 then count it as (4/5)*30 = 24 .
+            - Always return YOE(Years of Experience).
+            
 
 3. Education (20 points)
 
