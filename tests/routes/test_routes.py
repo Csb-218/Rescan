@@ -21,9 +21,9 @@ async def test_analyze_advanced(monkeypatch):
     client = TestClient(app)
     
     # Prepare files
-    with open("app/tests/jd_test.pdf", "rb") as f:
+    with open("tests/jd_test.pdf", "rb") as f:
         jd_file = f.read()
-    with open("app/tests/resume_test.pdf", "rb") as f:
+    with open("tests/resume_test.pdf", "rb") as f:
         resume_file = f.read()
 
     files = {
@@ -46,9 +46,9 @@ async def test_analyze_advanced_fail_processing_files():
     from app.main import app
     client = TestClient(app)
     # Prepare files
-    with open("app/tests/jd_test.pdf", "rb") as f:
+    with open("tests/jd_test.pdf", "rb") as f:
         jd_file = f.read()
-    with open("app/tests/corrupt_resume.pdf", "rb") as f:
+    with open("+tests/corrupt_resume.pdf", "rb") as f:
         resume_file = f.read()
 
     files = {

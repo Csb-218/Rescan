@@ -2,8 +2,8 @@ import pytest
 from fastapi import HTTPException
 from app.config import ollamaClient
 # from app.services.ollama import ollama_extract_text_from_image
-from app.schemas import JDResumeMatch,OllamaResponse
-from app.services.ollama import ollama_match_resume_jd
+from app.schemas import JDResumeMatch,OllamaResponse , JD ,Resume , TypeEnum
+from app.services.ollama import ollama_match_resume_jd , ollama_convert_raw_text_to_json
 import json
 
 result = {
@@ -43,9 +43,9 @@ async def test_ollama_match_resume_jd_success(
             
 
 
-        jd = "JD text"
-        resume = "Resume text"
-            
+        jd = {"jd": "JD text"}
+        resume = {"resume": "Resume text"}
+
         global result
 
         class MockResponse:
@@ -111,8 +111,8 @@ async def test_ollama_match_resume_jd_no_response(monkeypatch):
     Mocks the HTTP response to return a specific string and checks that the function returns None.
     """
 
-    jd = "JD text"
-    resume = "Resume text"
+    jd = {"jd": "JD text"}
+    resume = {"resume": "Resume text"}
 
     class MockResponse:
                 # mock json() method always returns a specific testing dictionary
@@ -142,8 +142,8 @@ async def test_ollama_match_resume_jd_exception(monkeypatch):
     .
     """
 
-    jd = "JD text"
-    resume = "Resume text"
+    jd = {"jd": "JD text"}
+    resume = {"resume": "Resume text"}
 
     class MockResponse:
         # mock json() method always returns a specific testing dictionary
@@ -167,6 +167,117 @@ async def test_ollama_match_resume_jd_exception(monkeypatch):
     # Verify the exception has the correct properties
     assert excinfo.value.status_code == 500
     assert "Request failed" in excinfo.value.detail
+
+@pytest.mark.asyncio
+async def test_ollama_convert_raw_text_to_json_jd_success(monkeypatch):
+    """
+    Test the `ollama_convert_raw_text_to_json` function for successful conversion of raw text to JSON.
+    """
+    raw_text = "Sample raw text"
+    type = TypeEnum.jd
+
+    global result
+
+    class MockResponse:
+        # mock json() method always returns a specific testing dictionary
+        @staticmethod
+        def json():
+            return raw_response
+
+        @property
+        def status_code(self):
+            return 200
+
+    async def set_response(*args, **kwargs):
+        return MockResponse()
+
+    def mock_model_validate(*args, **kwargs):
+        class MockParsedResponse:
+            response = json.dumps(result)
+        return MockParsedResponse()
+
+    def mock_model_validate_json(*args, **kwargs):
+        class MockValidatedResponse:
+            def model_dump_json(self, *args_inner, **kwargs_inner):
+                return json.dumps(result)
+        return MockValidatedResponse()
+
+    def mock_json_loads(*args, **kwargs):
+        return result
+
+    # patches
+    monkeypatch.setattr(ollamaClient, "post", set_response)
+    monkeypatch.setattr(OllamaResponse, "model_validate", mock_model_validate)
+    monkeypatch.setattr(JD, "model_validate", mock_model_validate_json)
+    monkeypatch.setattr(json, "loads", mock_json_loads)
+
+    # call the function
+    res = await ollama_convert_raw_text_to_json(raw_text, type)
+    print(99,res, result,99)
+
+    # assertions
+    assert res == result
+
+@pytest.mark.asyncio
+async def test_ollama_convert_raw_text_to_json_resume_success(monkeypatch):
+    """
+    Test the `ollama_convert_raw_text_to_json` function for successful conversion of raw text to JSON.
+    """
+    raw_text = "Sample raw text"
+    type = TypeEnum.resume
+
+    global result
+
+    class MockResponse:
+        # mock json() method always returns a specific testing dictionary
+        @staticmethod
+        def json():
+            return raw_response
+
+        @property
+        def status_code(self):
+            return 200
+
+    async def set_response(*args, **kwargs):
+        return MockResponse()
+
+    def mock_model_validate(*args, **kwargs):
+        class MockParsedResponse:
+            response = json.dumps(result)
+        return MockParsedResponse()
+
+    def mock_model_validate_json(*args, **kwargs):
+        class MockValidatedResponse:
+            def model_dump_json(self, *args_inner, **kwargs_inner):
+                return json.dumps(result)
+        return MockValidatedResponse()
+
+    def mock_json_loads(*args, **kwargs):
+        return result
+
+    # patches
+    monkeypatch.setattr(ollamaClient, "post", set_response)
+    monkeypatch.setattr(OllamaResponse, "model_validate", mock_model_validate)
+    monkeypatch.setattr(Resume, "model_validate", mock_model_validate_json)
+    monkeypatch.setattr(json, "loads", mock_json_loads)
+
+    # call the function
+    res = await ollama_convert_raw_text_to_json(raw_text, type)
+    print(99,res, result,99)
+
+    # assertions
+    assert res == result
+
+
+
+
+
+
+
+
+
+
+
 
 # async def test_ollama_extract_text_from_image(mock_client):
     # Arrange
