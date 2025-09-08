@@ -1,6 +1,17 @@
 from pydantic import BaseModel
 import json
 from typing import List, Optional
+from enum import Enum
+
+class LocationEnum(str, Enum):
+    remote = "remote"
+    hybrid = "hybrid"
+    on_site = "on-site"
+
+class TypeEnum(str, Enum):
+    jd = "job_description"
+    resume = "resume"
+
 
 class Reason(BaseModel):
     field: str
@@ -28,6 +39,25 @@ class JDResumeMatch(BaseModel):
     match_score: int
     improvement_suggestions: Optional[str] = None
     resume_pass: bool  
+
+class JD(BaseModel):
+    title: str
+    description: str
+    skills: List[str]
+    domain:str
+    location: LocationEnum | str
+    min_years_of_experience: float | None
+    max_years_of_experience: float | None
+    required_educational_qualifications: List[str]
+
+class Resume(BaseModel):
+    name: str
+    email: str
+    phone: str
+    skills: List[str]
+    total_years_of_experience: float
+    experience: List[str]
+    educational_qualifications: List[str]
 
 
 class Result(BaseModel):
