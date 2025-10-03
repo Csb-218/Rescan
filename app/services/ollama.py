@@ -64,7 +64,7 @@ async def ollama_convert_raw_text_to_json(raw_text:str,type:TypeEnum) -> dict | 
         '''
 
         body:dict = {
-                "model": "llama3.2:latest",
+                "model": "granite3.1-moe:1b",
                 "prompt": system_prompt,
                 "stream": False,
                 "format" : json_schema
