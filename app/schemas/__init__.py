@@ -41,14 +41,15 @@ class JDResumeMatch(BaseModel):
     resume_pass: bool  
 
 class JD(BaseModel):
-    title: str
+    role: str
     description: str
     skills: List[str]
+    responsibilities: List[str]
     domain:str
     location: LocationEnum | str
     min_years_of_experience: float | None
     max_years_of_experience: float | None
-    required_educational_qualifications: List[str]
+    requirements: List[str]
 
 class Resume(BaseModel):
     name: str
