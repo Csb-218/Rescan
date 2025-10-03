@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 import os
 from app.services.ollama import ollama_match_resume_jd , ollama_convert_raw_text_to_json
-from app.utils import extract_text_from_pdf , validate_and_save_files , match_calculator 
+from app.utils import extract_text_from_pdf , validate_and_save_files , match_calculator , validate_and_save_file
 from app.utils.jd_utils import JDParser
 from app.utils.resume_utlis import ResumeParser
 from app.schemas import TypeEnum
@@ -11,13 +11,55 @@ from app.schemas import TypeEnum
 
 
 AnalyzeRouter = APIRouter(
-    prefix="/analyze",
+    prefix="/api/analyze",
     tags=["analyze"],
     responses={
         200: {"description": "Successful operation"},
         400: {"description": "Bad request"}
     }
 )
+
+
+@AnalyzeRouter.post(
+    path="/read_file" ,
+    summary="Analyzes Resume and JD match" ,
+    responses={
+        200:{
+           "result": {
+                "jd": "resume_cs_bhagwant.pdf",
+                "content": "C.S Bhagwant\n9861289352 | csbhagwant@gmail.com | LinkedIn | Github | Twitter\nEXPERIENCE\nFreelance Fullstack Developer Nov 2024 - Jan 2025\nFounders Careers (Remote)\n● ...",
+             }
+        },
+        400:{"message":"Both Resume and JD(Job Description) are required."}
+    }
+    )
+
+async def readFile(files: tuple = Depends(validate_and_save_file)) :
+    jd, saved_paths = files
+    
+   
+    try : 
+        jd_content =  extract_text_from_pdf(saved_paths[0])
+        parsed_jd = await ollama_convert_raw_text_to_json(jd_content, TypeEnum.jd)
+        result = {
+            "jd": jd.filename,
+            "content": parsed_jd
+        }
+
+        return JSONResponse(content={"result": result}, status_code=200 )
+    
+    except Exception as err:
+        print(f"Error during analysis: {err}")
+        raise HTTPException(status_code=500, detail="An error occurred while processing the files.")
+
+    finally:
+        # Cleanup saved files
+        for path in saved_paths:
+            if path.exists():
+                try:
+                    os.remove(path)
+                except Exception as e:
+                    print(f"Error deleting {path}: {e}")
 
 
 @AnalyzeRouter.post(
